@@ -15,6 +15,17 @@ import compress_pickle as compickle
 
 st.set_page_config(page_title="Retail Demand Forecasting Dashboard", page_icon="📦", layout="wide")
 
+st.markdown("""
+<style>
+.scrollable-container {
+    height: 600px; 
+    overflow-y: scroll;
+    border: 1px solid #e6e6e6; /* Opsional: border agar terlihat */
+    padding: 10px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # load model data
 @st.cache_data
 def load_raw_data():
@@ -174,7 +185,10 @@ if submitted:
     st.pyplot(fig)
     
     st.subheader("Rekomendasi Stok Optimal (Tabel)")
-    st.dataframe(forecast_df, use_container_width=True)
+    with st.container():
+        st.markdown('<div class="scrollable-container">', unsafe_allow_html=True)
+        st.dataframe(forecast_df, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 st.sidebar.header("💡 Performa Model")
 st.sidebar.markdown("Ringkasan MAE & MAPE pada data test.")
