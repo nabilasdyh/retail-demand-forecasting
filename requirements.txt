@@ -4,4 +4,4 @@ numpy
 matplotlib
 statsmodels
 compress-pickle
-scikit-learn
+scikit-learn==1.6.1
