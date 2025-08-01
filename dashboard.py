@@ -122,74 +122,72 @@ with st.sidebar.form("prediction_form"):
 
 # Logika Prediksi dan Output
 if submitted:
-    st.markdown('<div class="scrollable-container">', unsafe_allow_html=True)
+    # Buka container yang bisa di-scroll untuk seluruh hasil output
+    with st.container(height=600, border=True):
+        st.header(f"Hasil Prediksi untuk Kategori: **{selected_category}**")
 
-    st.header(f"Hasil Prediksi untuk Kategori: **{selected_category}**")
-    
-    model = sarimax_models[selected_category]
-    preprocessor = preprocessor_dict[selected_category]
-    mape = eval_dict[selected_category]['MAPE']
-    
-    # Hitung jumlah hari prediksi
-    forecast_days = (end_date - start_date).days + 1
-    
-    # Buat data eksogen untuk masa depan
-    future_index = pd.date_range(start=start_date, periods=forecast_days, freq='D')
-    
-    exog_cols_raw = ['Weather Condition', 'Seasonality', 'Region', 'Store ID', 'discount_level', 'price_level', 'Promotion', 'Epidemic']
-    X_future_raw = pd.DataFrame(index=future_index, columns=exog_cols_raw)
+        model = sarimax_models[selected_category]
+        preprocessor = preprocessor_dict[selected_category]
+        mape = eval_dict[selected_category]['MAPE']
 
-    # Mengisi data eksogen asumsi
-    for col in X_future_raw.columns:
-        if col == 'discount_level':
-            X_future_raw[col] = discount_scenario
-        elif col == 'price_level':
-            X_future_raw[col] = 'sedang'
-        elif col == 'Promotion':
-            X_future_raw[col] = promo_scenario
-        elif col == 'Epidemic':
-            X_future_raw[col] = 0
-        elif col == 'Weather Condition':
-            X_future_raw[col] = 'Normal'
-        elif col == 'Seasonality':
-            month = X_future_raw.index.month
-            season_map = {1: 'Winter', 2: 'Winter', 3: 'Spring', 4: 'Spring', 5: 'Spring', 6: 'Summer', 7: 'Summer', 8: 'Summer', 9: 'Autumn', 10: 'Autumn', 11: 'Autumn', 12: 'Winter'}
-            X_future_raw[col] = [season_map[m] for m in month]
-        elif col == 'Region':
-            region_mode = pd.Series(df_model_sarimax[df_model_sarimax['Category'] == selected_category]['Region']).mode()[0]
-            X_future_raw[col] = region_mode
-        elif col == 'Store ID':
-            store_mode = pd.Series(df_model_sarimax[df_model_sarimax['Category'] == selected_category]['Store ID']).mode()[0]
-            X_future_raw[col] = store_mode
-        else:
-            X_future_raw[col] = 0
+        # Hitung jumlah hari prediksi
+        forecast_days = (end_date - start_date).days + 1
 
-    X_future_encoded = preprocessor.transform(X_future_raw)
-    expected_columns_after_transform = preprocessor.get_feature_names_out()
-    X_future_df = pd.DataFrame(X_future_encoded, index=future_index, columns=expected_columns_after_transform).fillna(0)
+        # Buat data eksogen untuk masa depan
+        future_index = pd.date_range(start=start_date, periods=forecast_days, freq='D')
 
-    future_forecast = model.get_forecast(steps=forecast_days, exog=X_future_df.astype(float))
-    forecast_df = future_forecast.predicted_mean.to_frame('predicted_demand')
-    
-    forecast_df['optimal_stock'] = forecast_df['predicted_demand'] * (1 + mape)
-    forecast_df['optimal_stock'] = forecast_df['optimal_stock'].apply(lambda x: max(0, x))
-    forecast_df = forecast_df.round(2)
-    
-    st.subheader("Grafik Prediksi Demand & Stok Optimal")
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(forecast_df.index, forecast_df['predicted_demand'], label='Predicted Demand', color='green', marker='o', markersize=3)
-    ax.plot(forecast_df.index, forecast_df['optimal_stock'], label='Optimal Stock', color='orange', linestyle='--')
-    ax.set_title(f"Prediksi Harian {selected_category} ({start_date} s/d {end_date})")
-    ax.set_xlabel("Tanggal")
-    ax.set_ylabel("Jumlah Unit")
-    ax.legend()
-    ax.grid(True)
-    st.pyplot(fig)
-    
-    st.subheader("Rekomendasi Stok Optimal (Tabel)")
-    st.dataframe(forecast_df, use_container_width=True)
+        exog_cols_raw = ['Weather Condition', 'Seasonality', 'Region', 'Store ID', 'discount_level', 'price_level', 'Promotion', 'Epidemic']
+        X_future_raw = pd.DataFrame(index=future_index, columns=exog_cols_raw)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        # Mengisi data eksogen asumsi
+        for col in X_future_raw.columns:
+            if col == 'discount_level':
+                X_future_raw[col] = discount_scenario
+            elif col == 'price_level':
+                X_future_raw[col] = 'sedang'
+            elif col == 'Promotion':
+                X_future_raw[col] = promo_scenario
+            elif col == 'Epidemic':
+                X_future_raw[col] = 0
+            elif col == 'Weather Condition':
+                X_future_raw[col] = 'Normal'
+            elif col == 'Seasonality':
+                month = X_future_raw.index.month
+                season_map = {1: 'Winter', 2: 'Winter', 3: 'Spring', 4: 'Spring', 5: 'Spring', 6: 'Summer', 7: 'Summer', 8: 'Summer', 9: 'Autumn', 10: 'Autumn', 11: 'Autumn', 12: 'Winter'}
+                X_future_raw[col] = [season_map[m] for m in month]
+            elif col == 'Region':
+                region_mode = pd.Series(df_model_sarimax[df_model_sarimax['Category'] == selected_category]['Region']).mode()[0]
+                X_future_raw[col] = region_mode
+            elif col == 'Store ID':
+                store_mode = pd.Series(df_model_sarimax[df_model_sarimax['Category'] == selected_category]['Store ID']).mode()[0]
+                X_future_raw[col] = store_mode
+            else:
+                X_future_raw[col] = 0
+
+        X_future_encoded = preprocessor.transform(X_future_raw)
+        expected_columns_after_transform = preprocessor.get_feature_names_out()
+        X_future_df = pd.DataFrame(X_future_encoded, index=future_index, columns=expected_columns_after_transform).fillna(0)
+
+        future_forecast = model.get_forecast(steps=forecast_days, exog=X_future_df.astype(float))
+        forecast_df = future_forecast.predicted_mean.to_frame('predicted_demand')
+
+        forecast_df['optimal_stock'] = forecast_df['predicted_demand'] * (1 + mape)
+        forecast_df['optimal_stock'] = forecast_df['optimal_stock'].apply(lambda x: max(0, x))
+        forecast_df = forecast_df.round(2)
+
+        st.subheader("Grafik Prediksi Demand & Stok Optimal")
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.plot(forecast_df.index, forecast_df['predicted_demand'], label='Predicted Demand', color='green', marker='o', markersize=3)
+        ax.plot(forecast_df.index, forecast_df['optimal_stock'], label='Optimal Stock', color='orange', linestyle='--')
+        ax.set_title(f"Prediksi Harian {selected_category} ({start_date} s/d {end_date})")
+        ax.set_xlabel("Tanggal")
+        ax.set_ylabel("Jumlah Unit")
+        ax.legend()
+        ax.grid(True)
+        st.pyplot(fig)
+
+        st.subheader("Rekomendasi Stok Optimal (Tabel)")
+        st.dataframe(forecast_df, use_container_width=True)
     
 st.sidebar.header("💡 Performa Model")
 st.sidebar.markdown("Ringkasan MAE & MAPE pada data test.")
