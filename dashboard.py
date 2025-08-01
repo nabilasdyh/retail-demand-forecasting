@@ -122,6 +122,8 @@ with st.sidebar.form("prediction_form"):
 
 # Logika Prediksi dan Output
 if submitted:
+    st.markdown('<div class="scrollable-container">', unsafe_allow_html=True)
+
     st.header(f"Hasil Prediksi untuk Kategori: **{selected_category}**")
     
     model = sarimax_models[selected_category]
@@ -185,11 +187,10 @@ if submitted:
     st.pyplot(fig)
     
     st.subheader("Rekomendasi Stok Optimal (Tabel)")
-    with st.container():
-        st.markdown('<div class="scrollable-container">', unsafe_allow_html=True)
-        st.dataframe(forecast_df, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.dataframe(forecast_df, use_container_width=True)
 
+    st.markdown('</div>', unsafe_allow_html=True)
+    
 st.sidebar.header("💡 Performa Model")
 st.sidebar.markdown("Ringkasan MAE & MAPE pada data test.")
 for cat, metrics in eval_dict.items():
