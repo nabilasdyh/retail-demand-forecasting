@@ -4,3 +4,4 @@ numpy
 matplotlib
 statsmodels
 compress-pickle
+scikit-learn
