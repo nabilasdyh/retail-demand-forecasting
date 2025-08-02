@@ -1,0 +1,7 @@
+streamlit
+pandas
+numpy
+matplotlib
+statsmodels
+compress-pickle
+scikit-learn==1.6.1
